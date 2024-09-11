@@ -34,13 +34,28 @@ requirements:
     #- shap ==0.44.1      # we have skipped this version
     #- xarray ==2023.1.0  # we have 2023.6.0
 
+# We don't have pyfakefs
+{% set tests_to_ignore = " --ignore=tests/test_LocalClassifiers.py" %}
+
+{% set tests_to_skip = "" %}
+# We don't have xr
+{% set tests_to_skip = tests_to_skip + "test_explainer_tree_lcppn" %}
+{% set tests_to_skip = tests_to_skip + " or test_explainer_tree_lcpl" %}
+
 test:
+  source_files:
+    - tests
   imports:
     - hiclass
   requires:
     - pip
+    - pytest
+    - requests
+    - pandas
+    - shap
   commands:
     - pip check
+    - pytest -v tests {{ tests_to_ignore }} -k "not ({{ tests_to_skip }})"
 
 about:
   home: https://github.com/scikit-learn-contrib/hiclass
