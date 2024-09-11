@@ -37,8 +37,11 @@ requirements:
 # WARNING: these tests include connections to zenodo.org (a CERN
 # dataset sharing site).  Not all CI workers can connect.
 
+{% set tests_to_ignore = "" %}
 # We don't have pyfakefs
-{% set tests_to_ignore = " --ignore=tests/test_LocalClassifiers.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_LocalClassifiers.py" %}
+# s390x doesn't have shap
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_Explainer.py" %}
 
 {% set tests_to_skip = "" %}
 # We don't have xr
@@ -50,6 +53,10 @@ requirements:
 {% set tests_to_skip = tests_to_skip + " or test_load_hierarchical_text_classification_random_state" %} # [osx]
 {% set tests_to_skip = tests_to_skip + " or test_load_hierarchical_text_classification_file_exists" %}  # [osx]
 
+# $PREFIX/bin/python -sS -c 'import platform; print(platform.mac_ver()[0])' failes
+{% set tests_to_skip = tests_to_skip + " or test_fit_digraph" %}  # [osx and x86_64]
+
+
 test:
   source_files:
     - tests
@@ -60,7 +67,7 @@ test:
     - pytest
     - requests
     - pandas
-    - shap
+    - shap  # [not s390x]
   commands:
     - pip check
     - pytest -v tests {{ tests_to_ignore }} -k "not ({{ tests_to_skip }})"
