@@ -55,6 +55,8 @@ requirements:
 
 # $PREFIX/bin/python -sS -c 'import platform; print(platform.mac_ver()[0])' failes
 {% set tests_to_skip = tests_to_skip + " or test_fit_digraph" %}  # [osx and x86_64]
+{% set tests_to_skip = tests_to_skip + " or test_fit_1_class" %}  # [osx and x86_64]
+{% set tests_to_skip = tests_to_skip + " or test_fit_1_label" %}  # [osx and x86_64]
 
 
 test:
