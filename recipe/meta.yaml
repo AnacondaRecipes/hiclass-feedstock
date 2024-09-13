@@ -10,30 +10,69 @@ source:
   sha256: e8a465824133ead5e2552f36bce558418305b4d81b233f605bb97cdc5d8d22c5
 
 build:
-  noarch: python
+  skip: True  # [py<38 or py>311]
   number: 0
   entry_points:
     - hiclass = hiclass.__main__:main
-  script: {{ PYTHON }} -m pip install . -vv
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
 
 requirements:
   host:
-    - python >=3.7,<3.9
+    - python
     - pip
+    - setuptools
+    - wheel
   run:
-    - python >=3.7,<3.9
+    - python
     - networkx
-    - numpy <1.24
-    - scikit-learn
-    - ray-core
+    - numpy
+    - scikit-learn <1.5
+    - scipy <1.13
+  run_constrained:
+    - ray-core >=1.11.0
+    # xai wants the following specific versions
+    #- shap ==0.44.1      # we have skipped this version
+    #- xarray ==2023.1.0  # we have 2023.6.0
+
+# WARNING: these tests include connections to zenodo.org (a CERN
+# dataset sharing site).  Not all CI workers can connect.
+
+{% set tests_to_ignore = "" %}
+# We don't have pyfakefs
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_LocalClassifiers.py" %}
+# s390x doesn't have shap
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_Explainer.py" %}  # [s390x]
+
+{% set tests_to_skip = "" %}
+# We don't have xr
+{% set tests_to_skip = tests_to_skip + "test_explainer_tree_lcppn" %}
+{% set tests_to_skip = tests_to_skip + " or test_explainer_tree_lcpl" %}
+
+# connection failures
+{% set tests_to_skip = tests_to_skip + " or test_load_hierarchical_text_classification_shape" %}        # [osx]
+{% set tests_to_skip = tests_to_skip + " or test_load_hierarchical_text_classification_random_state" %} # [osx]
+{% set tests_to_skip = tests_to_skip + " or test_load_hierarchical_text_classification_file_exists" %}  # [osx]
+
+# $PREFIX/bin/python -sS -c 'import platform; print(platform.mac_ver()[0])' failes
+{% set tests_to_skip = tests_to_skip + " or test_fit_digraph" %}  # [osx and x86_64]
+{% set tests_to_skip = tests_to_skip + " or test_fit_1_class" %}  # [osx and x86_64]
+{% set tests_to_skip = tests_to_skip + " or test_fit_1_label" %}  # [osx and x86_64]
+
 
 test:
+  source_files:
+    - tests
   imports:
     - hiclass
   requires:
     - pip
+    - pytest
+    - requests
+    - pandas
+    - shap  # [not s390x]
   commands:
     - pip check
+    - pytest -v tests {{ tests_to_ignore }} -k "not ({{ tests_to_skip }})"
 
 about:
   home: https://github.com/scikit-learn-contrib/hiclass
