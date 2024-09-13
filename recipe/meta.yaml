@@ -41,7 +41,7 @@ requirements:
 # We don't have pyfakefs
 {% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_LocalClassifiers.py" %}
 # s390x doesn't have shap
-{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_Explainer.py" %}
+{% set tests_to_ignore = tests_to_ignore + " --ignore=tests/test_Explainer.py" %}  # [s390x]
 
 {% set tests_to_skip = "" %}
 # We don't have xr
